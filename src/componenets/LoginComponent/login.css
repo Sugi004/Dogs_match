@@ -1,0 +1,38 @@
+/* Make input fields blend with the background */
+.form-control {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3)!important;
+
+    backdrop-filter: blur(10px)!important;
+    transition: all 0.3s ease-in-out !important;
+  }
+  
+
+  .form-control:focus {
+    background: rgba(85, 83, 83, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3) !important; 
+  }
+  
+ 
+  .form-control::placeholder {
+    color: rgba(18, 16, 16, 0.7)!important;
+  }
+  
+  /* Ensure autofill matches input background */
+/* Force autofill background to match input's background */
+.form-control:-webkit-autofill,
+.form-control:-webkit-autofill:hover,
+.form-control:-webkit-autofill:focus {
+  background-color: transparent !important;
+  -webkit-box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.1) inset !important;
+  color: rgb(82, 73, 73);
+  -webkit-text-fill-color: rgb(11, 11, 11) !important;
+  caret-color: rgb(127, 111, 111) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Ensure text visibility */
+.form-control:-webkit-autofill::first-line {
+  color: rgb(123, 117, 117) !important;
+}
