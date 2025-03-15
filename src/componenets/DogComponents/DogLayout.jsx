@@ -52,7 +52,7 @@ const DogsLayout = () => {
   
   const [city, setCity] = useState("");
   const [states, setStates] = useState([]);
-  const [geoBoundingBox, setGeoBoundingBox] = useState(null); // Optional bounding box for location
+  const [geoBoundingBox, setGeoBoundingBox] = useState({top: "", left: "", bottom: "", right: "",}); // Optional bounding box for location
   const [ageRange, setAgeRange] = useState([0, 20]);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState({ field: "breed", direction: "asc" });
@@ -62,17 +62,6 @@ const DogsLayout = () => {
 
 
   const navigate = useNavigate() // Store full dog objects
-
-
-  useEffect(() => {
-    const token = getCookie('fetch-access-token');
-    // if (!token) {
-    //   // Redirect to the login page if token is not found
-    //   navigate('/login');
-    // }
-
-    console.log(token);
-  }, [navigate]);
 
 
   const clearToken = () => {
@@ -145,18 +134,48 @@ const DogsLayout = () => {
   
 
   const handleLocationSearch = async () => {
-    if (!city && states.length === 0) {
-      toast.error("Enter a location to search for dogs",{timeout: 2000});
+    if (!city && states.length === 0 && !geoBoundingBox.top && !geoBoundingBox.left && !geoBoundingBox.bottom && !geoBoundingBox.right) {
+      
+      toast.error("Please enter a city or state to search for dogs.",{timeout: 2000});
       return;
     }
-  
-    
-    
+
+   
     // Fetch locations based on user input
     try {
-      const locationData = await fetchLocations({ city, states });
+      if (geoBoundingBox) {
 
-      if (locationData.resultIds && locationData.city !== city && locationData.states !== states) {
+        console.log(geoBoundingBox)
+        const { top, bottom, left, right } = geoBoundingBox;
+  
+        // Check if all the coordinates are valid numbers
+        if (isNaN(top) || isNaN(bottom) || isNaN(left) || isNaN(right)) {
+          toast.error("Invalid coordinates in bounding box", { timeout: 2000 });
+          return;
+        }
+  
+        // Ensure that the coordinates make sense: top > bottom, left < right
+        if ((top >0 && top <= bottom) || (left>0 && left >= right)) {
+          toast.error("Invalid bounding box coordinates", { timeout: 2000 });
+          return;
+        }
+  
+        // Check if the coordinates are within valid latitude and longitude ranges
+        if (top > 90 || bottom < -90 || left < -180 || right > 180) {
+          toast.error("Coordinates out of valid range", { timeout: 2000 });
+          return;
+        }
+        if (top < -90 || bottom > 90 || left > 180 || right < -180) {
+          toast.error("Coordinates out of valid range", { timeout: 2000 });
+          return;
+        }
+      }
+      const locationData = await fetchLocations({city, 
+        states,
+        geoBoundingBox: geoBoundingBox && geoBoundingBox.top && geoBoundingBox.bottom && geoBoundingBox.left && geoBoundingBox.right ? geoBoundingBox : undefined
+      });
+      console.log("Location Data:", locationData);
+      if (locationData.resultIds && locationData.city !== city && locationData.states !== states || !geoBoundingBox) {
         toast.error("Enter a valid city or state",{timeout: 2000});
         return;
       }
@@ -169,28 +188,27 @@ const DogsLayout = () => {
   
     // Extract ZIP codes from the response
     const zipCodes = locationData.results.map((location) => location.zip_code);
-  
-   
-  
+
     // Set ZIP codes and trigger dog search
     setSelectedZipCodes(zipCodes);
    
-   
     } catch (error) {
       toast.error(error.message || "Failed to fetch dogs for the provided location",{timeout: 2000});
-     
-      
     }
   };
 
   const clearFilters = () => {
-    // Reset all filter-related states
-    setSelectedBreeds([]); // Reset selected breeds
+    
+    setSelectedBreeds([]); 
     setAgeRange([0, 20]); // Reset age range (assuming default is 0-20)
     setSelectedZipCodes([]); // Reset selected zip codes (empty for no filter)
     setSort({ field: 'breed', direction: 'asc' }); // Reset sort to default (breed: ascending)
     setPage(1); // Reset page to the first page
-   
+    setCity(""); // Reset city input
+    setStates([]); // Reset states input
+    setGeoBoundingBox({ top: "", left: "", bottom: "", right: "" }); // Reset geo bounding box
+    setFavorites([]); // Clear favorites
+    setMatchResult(null); // Clear match result
   };
   
   
@@ -198,7 +216,7 @@ const DogsLayout = () => {
   return (
 
     
-    <Container sx={{ mt: 4, display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
+  <Container sx={{ mt: 4, display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
   {/* Header Section */}
   <Typography variant="h4" align="center" gutterBottom>
     Browse Available Dogs
@@ -206,6 +224,14 @@ const DogsLayout = () => {
   <Typography variant="subtitle1" align="center" gutterBottom>
     Select your favorite dogs and find your perfect match!
   </Typography>&nbsp;
+  {/* Toast Container for Notifications */}
+  {ToastContainer && (
+    <ToastContainer
+      position="top-right"
+      
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick/>)}
 
   {/* Logout Button */}
   <Button
@@ -220,7 +246,7 @@ const DogsLayout = () => {
   </Button>
 
   {/* Filters Section */}
-  <Grid container spacing={4} justifyContent="space-between" sx={{ width: '100%' }}>
+  <Grid container spacing={4} justifyContent="space-between">
     {/* Breed Filter */}
     <Grid item md={5} sm={4}>
       <FormControl fullWidth>
@@ -269,7 +295,45 @@ const DogsLayout = () => {
         onChange={(e) => setStates(e.target.value.split(",").map((s) => s.trim().toUpperCase()))}
       />
     </Grid>
-    
+
+    <Grid item xs={12} sm={6} display="flex" flexDirection="row" gap={2}>
+    <TextField
+      label="Top Latitude"
+      type="number"
+      variant="outlined"
+      fullWidth
+      value={geoBoundingBox.top || ""}
+      onChange={(e) => setGeoBoundingBox({ ...geoBoundingBox, top: parseFloat(e.target.value) })}
+    />
+    <TextField
+      label="Left Longitude"
+      type="number"
+      variant="outlined"
+      fullWidth
+      value={geoBoundingBox.left || ""}
+      onChange={(e) => setGeoBoundingBox({ ...geoBoundingBox, left: parseFloat(e.target.value) })}
+    />
+  </Grid>
+
+  <Grid item xs={12} sm={6} display="flex" flexDirection="row" gap={2}>
+    <TextField
+      label="Bottom Latitude"
+      type="number"
+      variant="outlined"
+      fullWidth
+      value={geoBoundingBox.bottom || ""}
+      onChange={(e) => setGeoBoundingBox({ ...geoBoundingBox, bottom: parseFloat(e.target.value) })}
+    />
+    <TextField
+      label="Right Longitude"
+      type="number"
+      variant="outlined"
+      fullWidth
+      value={geoBoundingBox.right || ""}
+      onChange={(e) => setGeoBoundingBox({ ...geoBoundingBox, right: parseFloat(e.target.value) })}
+    />
+  </Grid>
+      
 
     {/* Search Location Button */}
     <Grid item xs={12} sm={6} justifyContent={"center"} sx={{marginTop: 1}}>
