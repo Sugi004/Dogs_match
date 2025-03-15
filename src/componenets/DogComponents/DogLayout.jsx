@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {toast, ToastContainer} from "react-toastify";
 import {useUserContext} from "../../Context/UserContext";
@@ -25,31 +25,18 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import { useNavigate } from "react-router-dom";
 
 
-const getCookie = (name) => {
-  const value = `${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-
-  console.log("Cookie value:", value);
-
-  console.log("Cookie parts:", parts);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return null;
-};
-
-
-
-
 const DogsLayout = () => {
+
+  // Import fetch functions from user context
   const {fetchBreeds,
     fetchDogIDs,
     fetchDogs,
     fetchLocations,
     matchDogs,} = useUserContext();
 
-
+  // State variables for search and filter criteria
   const [breeds, setBreeds] = useState([]);
   const [selectedBreeds, setSelectedBreeds] = useState([]);
-  
   const [city, setCity] = useState("");
   const [states, setStates] = useState([]);
   const [geoBoundingBox, setGeoBoundingBox] = useState({top: "", left: "", bottom: "", right: "",}); // Optional bounding box for location
@@ -61,12 +48,9 @@ const DogsLayout = () => {
   const [selectedZipCodes, setSelectedZipCodes] = useState([]);
 
 
-  const navigate = useNavigate() // Store full dog objects
+  const navigate = useNavigate() // Redirect to login page after logout
 
 
-  const clearToken = () => {
-    document.cookie = 'fetch-access-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
-  };
 
   // Fetch breed list
   const { data: breedList } = useQuery(["breeds"], fetchBreeds, {
@@ -74,7 +58,8 @@ const DogsLayout = () => {
     onError: (error) => console.error("Failed to fetch breeds:", error.message),
   });
 
-
+  // Fetch dog IDs based on search criteria
+  // Ensure that selectedBreeds and ageRange are included in the query key to refetch when they change
   const { data: searchResults, isLoading: isSearching } = useQuery(
     ["dogs", {
       breeds: selectedBreeds,
@@ -106,82 +91,92 @@ const DogsLayout = () => {
     }
   );
 
+  // Mutation to match dogs from favorites
+  // Ensure that the mutation is only called when favorites are not empty
   const matchMutation = useMutation(matchDogs, {
     onSuccess: (matchedDog) => {
       setMatchResult(matchedDog); // Store the full matched dog object
     },
-    onError: (error) => console.error("Failed to fetch matched dog details:", error.message),
+    onError: (error) => {
+      toast.error("Failed to find a match. Please try again.", {timeout: 1000});
+      console.error("Failed to fetch matched dog details:", error.message)},
+    onSettled: () => {
+      if (matchResult) {
+        toast.success("Match found! Check your favorites.", {autoClose: 1000});
+      }}
   });
 
+  // Toggle favorite status for a dog
   const toggleFavorite = (dogId) => {
     setFavorites((prev) =>
       prev.includes(dogId) ? prev.filter((id) => id !== dogId) : [...prev, dogId]
     );
   };
 
+  // Handle page change for pagination
   const handlePageChange = (_, newPage) => {
     setPage(newPage);
   };
 
+  // Handle sort field change
   const handleSortFieldChange = (e) => {
     setSort((prev) => ({ ...prev, field: e.target.value }));
   };
 
+  // Handle sort direction change
   const handleSortDirectionChange = (e) => {
     setSort((prev) => ({ ...prev, direction: e.target.value }));
   };
 
   
-
+  // Handle location search with validation
   const handleLocationSearch = async () => {
     if (!city && states.length === 0 && !geoBoundingBox.top && !geoBoundingBox.left && !geoBoundingBox.bottom && !geoBoundingBox.right) {
       
-      toast.error("Please enter a city or state to search for dogs.",{timeout: 2000});
+      toast.error("Please enter a city or state to search for dogs.",{timeout: 1000});
       return;
     }
-
-   
     // Fetch locations based on user input
     try {
       if (geoBoundingBox) {
-
-        console.log(geoBoundingBox)
+        // Validate geoBoundingBox coordinates
         const { top, bottom, left, right } = geoBoundingBox;
   
         // Check if all the coordinates are valid numbers
         if (isNaN(top) || isNaN(bottom) || isNaN(left) || isNaN(right)) {
-          toast.error("Invalid coordinates in bounding box", { timeout: 2000 });
+          toast.error("Invalid coordinates in bounding box", { timeout: 1000 });
           return;
         }
   
         // Ensure that the coordinates make sense: top > bottom, left < right
         if ((top >0 && top <= bottom) || (left>0 && left >= right)) {
-          toast.error("Invalid bounding box coordinates", { timeout: 2000 });
+          toast.error("Invalid bounding box coordinates", { timeout: 1000 });
           return;
         }
   
         // Check if the coordinates are within valid latitude and longitude ranges
         if (top > 90 || bottom < -90 || left < -180 || right > 180) {
-          toast.error("Coordinates out of valid range", { timeout: 2000 });
+          toast.error("Coordinates out of valid range", { timeout: 1000 });
           return;
         }
         if (top < -90 || bottom > 90 || left > 180 || right < -180) {
-          toast.error("Coordinates out of valid range", { timeout: 2000 });
+          toast.error("Coordinates out of valid range", { timeout: 1000 });
           return;
         }
       }
+      // Fetch location data based on city, states, and geoBoundingBox
       const locationData = await fetchLocations({city, 
         states,
         geoBoundingBox: geoBoundingBox && geoBoundingBox.top && geoBoundingBox.bottom && geoBoundingBox.left && geoBoundingBox.right ? geoBoundingBox : undefined
       });
       console.log("Location Data:", locationData);
       if (locationData.resultIds && locationData.city !== city && locationData.states !== states || !geoBoundingBox) {
-        toast.error("Enter a valid city or state",{timeout: 2000});
+        toast.error("Enter a valid city or state",{timeout: 1000});
         return;
       }
   
     if (!locationData.results || locationData.results.length === 0) {
-      toast.error("No Locations found for the given input.",{timeout: 2000});
+      toast.error("No Locations found for the given input.",{timeout: 1000});
      
       return;
     }
@@ -193,10 +188,11 @@ const DogsLayout = () => {
     setSelectedZipCodes(zipCodes);
    
     } catch (error) {
-      toast.error(error.message || "Failed to fetch dogs for the provided location",{timeout: 2000});
+      toast.error(error.message || "Failed to fetch dogs for the provided location",{timeout: 1000});
     }
   };
 
+  // Clear all filters and reset state
   const clearFilters = () => {
     
     setSelectedBreeds([]); 
@@ -228,7 +224,6 @@ const DogsLayout = () => {
   {ToastContainer && (
     <ToastContainer
       position="top-right"
-      
       hideProgressBar={false}
       newestOnTop={false}
       closeOnClick/>)}
@@ -237,7 +232,6 @@ const DogsLayout = () => {
   <Button
     variant="outlined"
     onClick={() => {
-      clearToken();
       navigate('/login');
     }}
     sx={{ position: "absolute", top: 1, right: 0 }}
@@ -295,7 +289,7 @@ const DogsLayout = () => {
         onChange={(e) => setStates(e.target.value.split(",").map((s) => s.trim().toUpperCase()))}
       />
     </Grid>
-
+    {/* Geo Bounding Box Inputs */}
     <Grid item xs={12} sm={6} display="flex" flexDirection="row" gap={2}>
     <TextField
       label="Top Latitude"
@@ -342,11 +336,6 @@ const DogsLayout = () => {
       </Button>
     </Grid>
 
-    {/* Divider */}
-    <Grid item xs={12}>
-      <Divider sx={{ my: 1 }} />
-    </Grid>    
-
     {/* Sort Controls */}
     <Grid item md={10} sm={4} display="flex" flexDirection="row" justifyContent="space-between" gap={5}>
       <FormControl fullWidth>
@@ -356,7 +345,7 @@ const DogsLayout = () => {
           <MenuItem value="desc">Descending</MenuItem>
         </Select>
       </FormControl>
-      <div></div>
+
       <FormControl fullWidth>
         <InputLabel>Sort By</InputLabel>
         <Select value={sort.field} onChange={handleSortFieldChange}>
@@ -374,7 +363,11 @@ const DogsLayout = () => {
       </Button>
     </Grid>
   </Grid>
+  
+  {/* Divider for visual separation */}
+  <Divider sx={{ width: "100%", mt: 4, mb: 2 }} />
 
+  {/* Dogs Display Section */}
   <Grid container spacing={3} sx={{ mt: 3 }}>
     {isSearching && isFetchingDogs ? (
       <Typography>Loading dogs...</Typography>
