@@ -1,4 +1,3 @@
-/* Make input fields blend with the background */
 .form-control {
     background: rgba(255, 255, 255, 0.1) !important;
     border: 1px solid rgba(255, 255, 255, 0.3)!important;
@@ -19,8 +18,6 @@
     color: rgba(18, 16, 16, 0.7)!important;
   }
   
-  /* Ensure autofill matches input background */
-/* Force autofill background to match input's background */
 .form-control:-webkit-autofill,
 .form-control:-webkit-autofill:hover,
 .form-control:-webkit-autofill:focus {
@@ -32,7 +29,6 @@
   transition: background-color 5000s ease-in-out 0s;
 }
 
-/* Ensure text visibility */
 .form-control:-webkit-autofill::first-line {
   color: rgb(123, 117, 117) !important;
 }

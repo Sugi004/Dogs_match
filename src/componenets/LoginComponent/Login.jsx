@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { TextField, Button, Container, Card, Typography, Box } from "@mui/material";
 import gsap from "gsap";
-import "./Login.css";
+import "./login.css";
 import { ToastContainer, toast } from "react-toastify";
 import image from "../../assets/image.png";
 
