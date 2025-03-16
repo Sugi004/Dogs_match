@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {toast, ToastContainer} from "react-toastify";
@@ -17,7 +18,6 @@ import {
   Slider,
   Pagination,
   TextField,
-  IconButton,
   Grid2,
   Divider
 } from "@mui/material";
@@ -169,7 +169,7 @@ const DogsLayout = () => {
         states,
         geoBoundingBox: geoBoundingBox && geoBoundingBox.top && geoBoundingBox.bottom && geoBoundingBox.left && geoBoundingBox.right ? geoBoundingBox : undefined
       });
-      console.log("Location Data:", locationData);
+      // Check if the response contains valid location data
       if (locationData.resultIds && locationData.city !== city && locationData.states !== states || !geoBoundingBox) {
         toast.error("Enter a valid city or state",{timeout: 1000});
         return;
@@ -375,7 +375,7 @@ const DogsLayout = () => {
       dogs?.map((dog) => (
         <Grid item xs={12} sm={6} md={4} key={dog.id}>
           <Card>
-            <CardMedia component="img" height="200" image={dog.img} alt={dog.name} />
+            <CardMedia component="img" height="300" image={dog.img} alt={dog.name} />
             <CardContent>
               <Typography variant="h6">{dog.name}</Typography>
               <Typography variant="body2">Breed: {dog.breed}</Typography>

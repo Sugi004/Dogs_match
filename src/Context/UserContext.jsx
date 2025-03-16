@@ -28,7 +28,7 @@ export const UserProvider = ({ children }) => {
       throw new Error("Invalid queryKey format for fetchDogIDs");
     }
 
-    const [_key, filters] = queryKey; // Extract filters object
+    const [_key, filters] = queryKey; // Destructure the filters from queryKey
     if (!filters || typeof filters !== "object") {
       throw new Error("Filters missing or incorrect in queryKey");
     }
@@ -45,6 +45,7 @@ export const UserProvider = ({ children }) => {
           from: (page - 1) * 12, 
           sort: sort ? `${sort.field}:${sort.direction}` : undefined,
         },
+        
         withCredentials: true,
       });
       return response.data;
@@ -80,6 +81,7 @@ export const UserProvider = ({ children }) => {
       );
 
       if (!response.data || !response.data.results) {
+        console.error("No location data received:");
         throw new Error("No location data received.");
       }
 
@@ -117,7 +119,9 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+
   return (
+    // Proveider to pass down the functions to componenets that need them
     <UserContext.Provider
       value={{
         fetchBreeds,
@@ -132,12 +136,12 @@ export const UserProvider = ({ children }) => {
   );
 };
 
-// Fix: Custom Hook to use the User Context
+// Custom Hook to use the User Context
 export const useUserContext = () => {
   return useContext(UserContext);
 };
 
-// Fix: Prop Types
+// Prop Types
 UserProvider.propTypes = {
   children: PropTypes.node.isRequired
 };
