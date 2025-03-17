@@ -24,7 +24,6 @@ import {
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import { useNavigate } from "react-router-dom";
 
-
 const DogsLayout = () => {
 
   // Import fetch functions from user context
@@ -48,9 +47,7 @@ const DogsLayout = () => {
   const [selectedZipCodes, setSelectedZipCodes] = useState([]);
 
 
-  const navigate = useNavigate() // Redirect to login page after logout
-
-
+  const navigate = useNavigate() 
 
   // Fetch breed list
   const { data: breedList } = useQuery(["breeds"], fetchBreeds, {
@@ -211,8 +208,19 @@ const DogsLayout = () => {
 
   return (
 
+  <>
+  <Button
+    variant="outlined"
+    onClick={() => {
+      navigate('/login');
+    }}
+    sx={{ position: "absolute", top: 10, right: 10 }}
+  >
+    Logout
+  </Button>
     
   <Container sx={{ mt: 4, display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
+    
   {/* Header Section */}
   <Typography variant="h4" align="center" gutterBottom>
     Browse Available Dogs
@@ -229,20 +237,12 @@ const DogsLayout = () => {
       closeOnClick/>)}
 
   {/* Logout Button */}
-  <Button
-    variant="outlined"
-    onClick={() => {
-      navigate('/login');
-    }}
-    sx={{ position: "absolute", top: 1, right: 0 }}
-  >
-    Logout
-  </Button>
+  
 
   {/* Filters Section */}
   <Grid container spacing={4} justifyContent="space-between">
     {/* Breed Filter */}
-    <Grid item md={5} sm={4}>
+    <Grid item md={5} sm={4} sx={{width: '100dvw'}}>
       <FormControl fullWidth>
         <InputLabel>Filter by Breed</InputLabel>
         <Select
@@ -431,6 +431,7 @@ const DogsLayout = () => {
     </Grid>
   )}
 </Container>
+</>
   );
 };
 

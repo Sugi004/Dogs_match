@@ -1,6 +1,7 @@
 import React, { createContext, useContext } from "react";
 import axios from "axios";
 import PropTypes from "prop-types";
+import { toast } from "react-toastify";
 
 // Fix: Correct context creation
 const UserContext = createContext();
@@ -10,6 +11,34 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 // User Context Provider Component
 export const UserProvider = ({ children }) => {
+
+  // Function to handle user login
+  // Fix: Use the correct API URL and handle success
+  const loginUser = async ({ email, name }) => {
+  
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/auth/login`,
+        { email, name },
+        { withCredentials: true });
+  
+      if (response.status === 200) {
+        toast.success("Login successful!");
+        console.log(response.data)
+      }
+      return response.status;
+    } catch (error) {
+      if (error.response && error.response.status === 401) {
+        toast.error("Invalid credentials. Please try again.");
+      } else if (error.response && error.response.status === 500) {
+        toast.error("Server error. Please try again later.");
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
+      // Handle other errors
+      console.error("Login failed:", error);
+    }
+  };
   
   // Fetch all breeds
   const fetchBreeds = async () => {
@@ -129,6 +158,7 @@ export const UserProvider = ({ children }) => {
         fetchDogs,
         fetchLocations,
         matchDogs,
+        loginUser, 
       }}
     >
       {children}

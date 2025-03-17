@@ -8,6 +8,7 @@ const AnimatedBackground = () => {
       duration: 5,
       repeat: -1,
       yoyo: true,
+      backgroundPosition: '100% 100%',
     });
   }, []);
 
@@ -15,3 +16,4 @@ const AnimatedBackground = () => {
 };
 
 export default AnimatedBackground;
+

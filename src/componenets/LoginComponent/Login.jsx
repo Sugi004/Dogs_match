@@ -1,50 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
+import {useUserContext} from "../../Context/UserContext";
 import { TextField, Button, Container, Card, Typography, Box } from "@mui/material";
 import gsap from "gsap";
 import "./login.css";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import image from "../../assets/image.png";
 
 
 
-// Function to handle user login
-// Fix: Use the correct API URL and handle success
-
-const loginUser = async ({ email, name }) => {
-
-  try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/auth/login`,
-      { email, name },
-      { withCredentials: true });
-
-    if (response.status === 200) {
-      toast.success("Login successful!");
-      
-    }
-    return response.status;
-  } catch (error) {
-    if (error.response && error.response.status === 401) {
-      toast.error("Invalid credentials. Please try again.");
-    } else if (error.response && error.response.status === 500) {
-      toast.error("Server error. Please try again later.");
-    } else {
-      toast.error("An unexpected error occurred. Please try again.");
-    }
-    // Handle other errors
-    console.error("Login failed:", error);
-  }
-  
-
-  
-
-  
-};
-
 function Login() {
+  const { loginUser } = useUserContext();
   const [formData, setFormData] = useState({ email: "", name: "" });
   const navigate = useNavigate();
   const formRef = useRef(null);
@@ -91,8 +58,8 @@ function Login() {
     <>
     
     <Container
-      maxWidth="md"
-      sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" ,width: "100vw"}}
+      maxWidth="lg"
+      sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100dvh" ,width: "100dvw", flexDirection: "row", flexWrap: "wrap"}}
     >
       {/* Toast Container for Notifications */}
         {ToastContainer && (
